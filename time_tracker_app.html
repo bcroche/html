@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seguidor de Horas de Oficina</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #2d3748;
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .week-info {
+            color: #718096;
+            font-size: 1rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #718096;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .hours-current { color: #3182ce; }
+        .hours-remaining { color: #38a169; }
+        .hours-over { color: #e53e3e; }
+
+        .current-session {
+            background: linear-gradient(135deg, #4299e1, #3182ce);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .session-time {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .session-status {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: white;
+        }
+
+        .btn-start:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(72, 187, 120, 0.3);
+        }
+
+        .btn-stop {
+            background: linear-gradient(135deg, #f56565, #e53e3e);
+            color: white;
+        }
+
+        .btn-stop:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(245, 101, 101, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .history-section {
+            margin-top: 30px;
+        }
+
+        .history-toggle {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 15px 20px;
+            width: 100%;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #4a5568;
+            transition: all 0.3s ease;
+        }
+
+        .history-toggle:hover {
+            background: #edf2f7;
+            border-color: #cbd5e0;
+        }
+
+        .history-content {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .history-content.show {
+            display: block;
+        }
+
+        .week-entry {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            border-left: 4px solid #4299e1;
+        }
+
+        .week-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .week-date {
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .week-total {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #4299e1;
+        }
+
+        .week-days {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 10px;
+            font-size: 0.9rem;
+            color: #718096;
+        }
+
+        .day-entry {
+            text-align: center;
+            padding: 8px;
+            background: #f7fafc;
+            border-radius: 8px;
+        }
+
+        .manual-adjustment {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .adjustment-header h3 {
+            color: #4a5568;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .adjustment-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .adjustment-controls input {
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            width: 120px;
+            text-align: center;
+        }
+
+        .btn-adjust {
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #805ad5, #6b46c1);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-adjust:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(128, 90, 213, 0.3);
+        }
+
+        .objective-section {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .objective-input {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .objective-input label {
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .objective-input input {
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            width: 100px;
+        }
+
+        .objective-input button {
+            padding: 10px 15px;
+            background: #4299e1;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            .session-time {
+                font-size: 2rem;
+            }
+
+            .adjustment-controls {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .week-days {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⏰ Control de Horas</h1>
+            <div class="week-info" id="weekInfo">Semana del 26 May - 1 Jun 2025</div>
+        </div>
+
+        <div class="objective-section">
+            <div class="objective-input">
+                <label>Objetivo semanal:</label>
+                <input type="number" id="objectiveInput" step="0.5" min="0" max="50">
+                <span>horas</span>
+                <button onclick="updateObjective()">Actualizar</button>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value hours-current" id="currentWeekHours">0.0</div>
+                <div class="stat-label">Horas esta semana</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="remainingHours">21.5</div>
+                <div class="stat-label" id="remainingLabel">Horas restantes</div>
+            </div>
+        </div>
+
+        <div class="current-session" id="currentSession">
+            <div class="session-time" id="sessionTime">00:00:00</div>
+            <div class="session-status" id="sessionStatus">Sesión no iniciada</div>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-start" id="startBtn" onclick="startSession()">Iniciar Jornada</button>
+            <button class="btn btn-stop" id="stopBtn" onclick="stopSession()" disabled>Terminar Jornada</button>
+        </div>
+
+        <div class="manual-adjustment">
+            <div class="adjustment-header">
+                <h3>⚙️ Ajuste Manual del Día</h3>
+            </div>
+            <div class="adjustment-controls">
+                <input type="number" id="minutesInput" placeholder="Minutos" step="1" min="-300" max="300">
+                <button class="btn-adjust" onclick="addMinutes()">Añadir/Restar</button>
+            </div>
+            <div class="adjustment-info">
+                Añade minutos positivos o negativos al día actual (ej: 30, -15)
+            </div>
+        </div>
+
+        <div class="history-section">
+            <button class="history-toggle" onclick="toggleHistory()">
+                📊 Ver Histórico de Semanas (últimas 8)
+            </button>
+            <div class="history-content" id="historyContent">
+                <div id="weekHistory"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let currentSessionStart = null;
+        let sessionInterval = null;
+        let weeklyObjective = 21.5;
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            updateDisplay();
+            updateWeekInfo();
+            
+            // Recuperar sesión activa si existe
+            const savedSession = localStorage.getItem('currentSession');
+            if (savedSession) {
+                currentSessionStart = new Date(savedSession);
+                // Actualizar estado de los botones
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+                startSessionTimer();
+            }
+        });
+
+        // Funciones de almacenamiento
+        function saveData() {
+            const data = {
+                weeklyObjective: weeklyObjective,
+                weekHistory: getWeekHistory()
+            };
+            localStorage.setItem('timeTrackerData', JSON.stringify(data));
+        }
+
+        function loadData() {
+            const data = localStorage.getItem('timeTrackerData');
+            if (data) {
+                const parsed = JSON.parse(data);
+                weeklyObjective = parsed.weeklyObjective || 21.5;
+                document.getElementById('objectiveInput').value = weeklyObjective;
+            } else {
+                document.getElementById('objectiveInput').value = weeklyObjective;
+            }
+        }
+
+        // Funciones de sesión
+        function startSession() {
+            currentSessionStart = new Date();
+            localStorage.setItem('currentSession', currentSessionStart.toISOString());
+            
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+            
+            startSessionTimer();
+        }
+
+        function stopSession() {
+            if (!currentSessionStart) return;
+            
+            const sessionEnd = new Date();
+            const sessionDuration = (sessionEnd - currentSessionStart) / (1000 * 60 * 60); // horas
+            
+            // Guardar la sesión del día
+            saveDaySession(sessionDuration);
+            
+            // Limpiar sesión actual
+            currentSessionStart = null;
+            localStorage.removeItem('currentSession');
+            clearInterval(sessionInterval);
+            
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('sessionTime').textContent = '00:00:00';
+            document.getElementById('sessionStatus').textContent = 'Sesión terminada';
+            
+            updateDisplay();
+        }
+
+        function startSessionTimer() {
+            document.getElementById('sessionStatus').textContent = 'Sesión activa';
+            
+            sessionInterval = setInterval(() => {
+                if (currentSessionStart) {
+                    const now = new Date();
+                    const elapsed = now - currentSessionStart;
+                    const hours = Math.floor(elapsed / (1000 * 60 * 60));
+                    const minutes = Math.floor((elapsed % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((elapsed % (1000 * 60)) / 1000);
+                    
+                    document.getElementById('sessionTime').textContent = 
+                        `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }
+            }, 1000);
+        }
+
+        // Funciones de datos semanales
+        function getWeekKey(date = new Date()) {
+            const monday = new Date(date);
+            monday.setDate(date.getDate() - (date.getDay() + 6) % 7);
+            return monday.toISOString().split('T')[0];
+        }
+
+        function saveDaySession(hours) {
+            const today = new Date().toISOString().split('T')[0];
+            const weekKey = getWeekKey();
+            
+            let weekData = JSON.parse(localStorage.getItem(`week_${weekKey}`) || '{}');
+            weekData[today] = (weekData[today] || 0) + hours;
+            
+            localStorage.setItem(`week_${weekKey}`, JSON.stringify(weekData));
+        }
+
+        function getCurrentWeekHours() {
+            const weekKey = getWeekKey();
+            const weekData = JSON.parse(localStorage.getItem(`week_${weekKey}`) || '{}');
+            return Object.values(weekData).reduce((sum, hours) => sum + hours, 0);
+        }
+
+        function getWeekHistory() {
+            const history = [];
+            const today = new Date();
+            
+            for (let i = 0; i < 8; i++) {
+                const weekStart = new Date(today);
+                weekStart.setDate(today.getDate() - (today.getDay() + 6) % 7 - (i * 7));
+                const weekKey = getWeekKey(weekStart);
+                const weekData = JSON.parse(localStorage.getItem(`week_${weekKey}`) || '{}');
+                
+                const weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekStart.getDate() + 6);
+                
+                history.push({
+                    weekStart: weekStart,
+                    weekEnd: weekEnd,
+                    weekKey: weekKey,
+                    days: weekData,
+                    total: Object.values(weekData).reduce((sum, hours) => sum + hours, 0)
+                });
+            }
+            
+            return history;
+        }
+
+        // Funciones de interfaz
+        function updateDisplay() {
+            const currentHours = getCurrentWeekHours();
+            const remaining = weeklyObjective - currentHours;
+            
+            document.getElementById('currentWeekHours').textContent = currentHours.toFixed(1);
+            
+            const remainingEl = document.getElementById('remainingHours');
+            const remainingLabelEl = document.getElementById('remainingLabel');
+            
+            if (remaining > 0) {
+                remainingEl.textContent = remaining.toFixed(1);
+                remainingEl.className = 'stat-value hours-remaining';
+                remainingLabelEl.textContent = 'Horas restantes';
+            } else {
+                remainingEl.textContent = Math.abs(remaining).toFixed(1);
+                remainingEl.className = 'stat-value hours-over';
+                remainingLabelEl.textContent = 'Horas extra';
+            }
+        }
+
+        function updateWeekInfo() {
+            const today = new Date();
+            const monday = new Date(today);
+            monday.setDate(today.getDate() - (today.getDay() + 6) % 7);
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+            
+            const options = { day: 'numeric', month: 'short' };
+            const mondayStr = monday.toLocaleDateString('es-ES', options);
+            const sundayStr = sunday.toLocaleDateString('es-ES', options);
+            
+            document.getElementById('weekInfo').textContent = `Semana del ${mondayStr} - ${sundayStr} ${today.getFullYear()}`;
+        }
+
+        function updateObjective() {
+            const newObjective = parseFloat(document.getElementById('objectiveInput').value);
+            if (newObjective && newObjective > 0) {
+                weeklyObjective = newObjective;
+                saveData();
+                updateDisplay();
+            }
+        }
+
+        function toggleHistory() {
+            const content = document.getElementById('historyContent');
+            const isVisible = content.classList.contains('show');
+            
+            if (isVisible) {
+                content.classList.remove('show');
+            } else {
+                content.classList.add('show');
+                displayWeekHistory();
+            }
+        }
+
+        function addMinutes() {
+            const minutesInput = document.getElementById('minutesInput');
+            const minutes = parseInt(minutesInput.value);
+            
+            if (isNaN(minutes) || minutes === 0) {
+                alert('Por favor, introduce un número válido de minutos');
+                return;
+            }
+            
+            if (Math.abs(minutes) > 300) {
+                alert('El ajuste no puede ser mayor a 5 horas (300 minutos)');
+                return;
+            }
+            
+            const hours = minutes / 60;
+            const today = new Date().toISOString().split('T')[0];
+            const weekKey = getWeekKey();
+            
+            let weekData = JSON.parse(localStorage.getItem(`week_${weekKey}`) || '{}');
+            weekData[today] = (weekData[today] || 0) + hours;
+            
+            // Evitar valores negativos
+            if (weekData[today] < 0) {
+                weekData[today] = 0;
+            }
+            
+            localStorage.setItem(`week_${weekKey}`, JSON.stringify(weekData));
+            
+            // Limpiar input y actualizar display
+            minutesInput.value = '';
+            updateDisplay();
+            
+            // Mostrar confirmación
+            const action = minutes > 0 ? 'añadido' : 'restado';
+            const absMinutes = Math.abs(minutes);
+            alert(`${action.charAt(0).toUpperCase() + action.slice(1)} ${absMinutes} minuto${absMinutes !== 1 ? 's' : ''} al día actual`);
+        }
+
+        function displayWeekHistory() {
+            const history = getWeekHistory();
+            const historyContainer = document.getElementById('weekHistory');
+            
+            historyContainer.innerHTML = history.map(week => {
+                const weekStart = week.weekStart.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+                const weekEnd = week.weekEnd.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+                
+                const dayNames = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie'];
+                const dayEntries = dayNames.map((dayName, index) => {
+                    const dayDate = new Date(week.weekStart);
+                    dayDate.setDate(week.weekStart.getDate() + index);
+                    const dayKey = dayDate.toISOString().split('T')[0];
+                    const hours = week.days[dayKey] || 0;
+                    
+                    return `
+                        <div class="day-entry">
+                            <div>${dayName}</div>
+                            <div><strong>${hours.toFixed(1)}h</strong></div>
+                        </div>
+                    `;
+                }).join('');
+                
+                return `
+                    <div class="week-entry">
+                        <div class="week-header">
+                            <div class="week-date">${weekStart} - ${weekEnd}</div>
+                            <div class="week-total">${week.total.toFixed(1)}h</div>
+                        </div>
+                        <div class="week-days">
+                            ${dayEntries}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+    </script>
+</body>
+</html>
