@@ -386,25 +386,6 @@
             </div>
         </div>
 
-        <div class="week-editor-section">
-            <button class="week-editor-toggle" onclick="toggleWeekEditor()">
-                ✏️ Editar Semana Actual
-            </button>
-            <div class="week-editor-content" id="weekEditorContent">
-                <div class="week-editor-header">
-                    <h3>Editar Horas de la Semana Actual</h3>
-                    <p>Modifica las horas trabajadas para cada día</p>
-                </div>
-                <div class="week-editor-grid" id="weekEditorGrid">
-                    <!-- Se genera dinámicamente -->
-                </div>
-                <div class="week-editor-actions">
-                    <button class="btn-save-week" onclick="saveWeekChanges()">Guardar Cambios</button>
-                    <button class="btn-cancel-week" onclick="cancelWeekChanges()">Cancelar</button>
-                </div>
-            </div>
-        </div>
-
         <div class="history-section">
             <button class="history-toggle" onclick="toggleHistory()">
                 📊 Ver Histórico de Semanas (últimas 8)
@@ -648,101 +629,6 @@
             const action = minutes > 0 ? 'añadido' : 'restado';
             const absMinutes = Math.abs(minutes);
             alert(`${action.charAt(0).toUpperCase() + action.slice(1)} ${absMinutes} minuto${absMinutes !== 1 ? 's' : ''} al día actual`);
-        }
-
-        let originalWeekData = {};
-
-        function toggleWeekEditor() {
-            const content = document.getElementById('weekEditorContent');
-            const isVisible = content.classList.contains('show');
-            
-            if (isVisible) {
-                content.classList.remove('show');
-            } else {
-                content.classList.add('show');
-                loadWeekEditor();
-            }
-        }
-
-        function loadWeekEditor() {
-            const weekKey = getWeekKey();
-            const weekData = JSON.parse(localStorage.getItem(`week_${weekKey}`) || '{}');
-            originalWeekData = { ...weekData }; // Copia para cancelar cambios
-            
-            const today = new Date();
-            const monday = new Date(today);
-            monday.setDate(today.getDate() - (today.getDay() + 6) % 7);
-            
-            const dayNames = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
-            const todayDateStr = today.toISOString().split('T')[0];
-            
-            const grid = document.getElementById('weekEditorGrid');
-            let html = '';
-            
-            for (let i = 0; i < 5; i++) {
-                const dayDate = new Date(monday);
-                dayDate.setDate(monday.getDate() + i);
-                const dayKey = dayDate.toISOString().split('T')[0];
-                const hours = weekData[dayKey] || 0;
-                const isToday = dayKey === todayDateStr;
-                
-                const dayStr = dayDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
-                
-                html += `
-                    <div class="day-editor ${isToday ? 'today' : ''}">
-                        <div class="day-editor-label">${dayNames[i]}</div>
-                        <div class="day-editor-date">${dayStr}</div>
-                        <input type="number" 
-                               id="day_${dayKey}" 
-                               value="${hours.toFixed(2)}" 
-                               step="0.25" 
-                               min="0" 
-                               max="12"
-                               placeholder="0.00">
-                    </div>
-                `;
-            }
-            
-            grid.innerHTML = html;
-        }
-
-        function saveWeekChanges() {
-            const weekKey = getWeekKey();
-            const newWeekData = {};
-            
-            const today = new Date();
-            const monday = new Date(today);
-            monday.setDate(today.getDate() - (today.getDay() + 6) % 7);
-            
-            // Recoger todos los valores de los inputs
-            for (let i = 0; i < 5; i++) {
-                const dayDate = new Date(monday);
-                dayDate.setDate(monday.getDate() + i);
-                const dayKey = dayDate.toISOString().split('T')[0];
-                const input = document.getElementById(`day_${dayKey}`);
-                const hours = parseFloat(input.value) || 0;
-                
-                if (hours > 0) {
-                    newWeekData[dayKey] = hours;
-                }
-            }
-            
-            // Guardar los cambios
-            localStorage.setItem(`week_${weekKey}`, JSON.stringify(newWeekData));
-            
-            // Actualizar display
-            updateDisplay();
-            
-            // Cerrar editor
-            const content = document.getElementById('weekEditorContent');
-            content.classList.remove('show');
-            
-            alert('✅ Cambios guardados correctamente');
-        }
-
-        function cancelWeekChanges() {
-            const content = document.getElementById('weekEditorContent');
-            content.classList.remove('show');
         }
 
         function displayWeekHistory() {
