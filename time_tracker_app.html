@@ -705,6 +705,10 @@
             
             grid.innerHTML = html;
         }
+        function hideWeekEditorContent() {
+            const grid = document.getElementById('weekEditorGrid');
+            grid.innerHTML = '';
+        }
 
         function saveWeekChanges() {
             const weekKey = getWeekKey();
@@ -734,15 +738,16 @@
             updateDisplay();
             
             // Cerrar editor
-            const content = document.getElementById('weekEditorContent');
-            content.classList.remove('show');
+            hideWeekEditorContent();
             
             alert('✅ Cambios guardados correctamente');
         }
 
+        
         function cancelWeekChanges() {
-            const content = document.getElementById('weekEditorContent');
-            content.classList.remove('show');
+            //hide week editor content
+            hideWeekEditorContent();
+
         }
 
         function displayWeekHistory() {
