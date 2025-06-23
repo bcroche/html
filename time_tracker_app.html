@@ -148,6 +148,7 @@
 
         .history-section {
             margin-top: 30px;
+            margin-bottom: 20px;
         }
 
         .history-toggle {
@@ -266,6 +267,23 @@
         .btn-adjust:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(128, 90, 213, 0.3);
+        }
+
+        .btn-importexport {
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #828183, #242424);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-importexport:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(129, 128, 131, 0.3);
         }
 
         .objective-section {
@@ -602,7 +620,7 @@
                 <div class="stat-label">Horas esta semana</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value" id="remainingHours">21.5</div>
+                <div class="stat-value" id="remainingHours">23.5</div>
                 <div class="stat-label" id="remainingLabel">Horas restantes</div>
             </div>
         </div>
@@ -657,13 +675,24 @@
                 <div id="weekHistory"></div>
             </div>
         </div>
+        <div class="week-editor-section">
+        <div class="adjustment-controls">
+            <!-- Boton para importar datos en JSON-->
+            <button class="btn-importexport" onclick="importData()">Importar Datos</button>
+            <!-- Boton para exportar datos en JSON-->
+            <button class="btn-importexport" onclick="exportData()">Exportar Datos</button>
+        </div>
+        </div>
     </div>
+    
 
     <script>
         // Variables globales
         let currentSessionStart = null;
         let sessionInterval = null;
-        let weeklyObjective = 21.5;
+        let weeklyObjective = 23.5;
+        let LOCALSTORAGEKEY = 'timeTrackerData'
+        const maxHours = 9; // Límite de horas para la sesión
 
         // Sistema de notificaciones
         function showNotification(title, message, type = 'info') {
@@ -739,14 +768,14 @@
                 weeklyObjective: weeklyObjective,
                 weekHistory: getWeekHistory()
             };
-            localStorage.setItem('timeTrackerData', JSON.stringify(data));
+            localStorage.setItem(LOCALSTORAGEKEY, JSON.stringify(data));
         }
 
         function loadData() {
-            const data = localStorage.getItem('timeTrackerData');
+            const data = localStorage.getItem(LOCALSTORAGEKEY);
             if (data) {
                 const parsed = JSON.parse(data);
-                weeklyObjective = parsed.weeklyObjective || 21.5;
+                weeklyObjective = parsed.weeklyObjective || 23.5;
                 document.getElementById('objectiveInput').value = weeklyObjective;
             } else {
                 document.getElementById('objectiveInput').value = weeklyObjective;
@@ -774,8 +803,13 @@
             if (!currentSessionStart) return;
             
             const sessionEnd = new Date();
-            const sessionDuration = (sessionEnd - currentSessionStart) / (1000 * 60 * 60); // horas
+            sessionDuration = (sessionEnd - currentSessionStart) / (1000 * 60 * 60); // horas
             
+            // set sessionDuration to minimum between sessionDuration and maxHours
+            if (sessionDuration > maxHours) {
+                sessionDuration = maxHours;
+            }
+
             // Guardar la sesión del día
             saveDaySession(sessionDuration);
             
@@ -808,10 +842,25 @@
                 if (currentSessionStart) {
                     const now = new Date();
                     const elapsed = now - currentSessionStart;
-                    const hours = Math.floor(elapsed / (1000 * 60 * 60));
-                    const minutes = Math.floor((elapsed % (1000 * 60 * 60)) / (1000 * 60));
-                    const seconds = Math.floor((elapsed % (1000 * 60)) / 1000);
+                    hours = Math.floor(elapsed / (1000 * 60 * 60));
+                    minutes = Math.floor((elapsed % (1000 * 60 * 60)) / (1000 * 60));
+                    seconds = Math.floor((elapsed % (1000 * 60)) / 1000);
                     
+                    if (hours >= maxHours) {
+                        clearInterval(sessionInterval);
+                        // Stop session automatically after 9 hours
+                        showNotification(
+                            'Límite Alcanzado', 
+                            'La jornada ha alcanzado el límite de 9 horas. La sesión se detendrá automáticamente.', 
+                            'warning'
+                        );
+                        // establecer el tiempo de sesión a 9 horas
+                        hours = maxHours;
+                        minutes = 0;
+                        seconds = 0;
+
+                        stopSession();
+                    }
                     document.getElementById('sessionTime').textContent = 
                         `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
                 }
@@ -1092,6 +1141,66 @@
             );
         }
 
+        // exportar todos los datos en un JSON
+        function exportData() {
+            const data = {
+                weeklyObjective: weeklyObjective,
+                weekHistory: getWeekHistory(),
+                currentSession: currentSessionStart ? currentSessionStart.toISOString() : null
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'time_tracker_data.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // importar datos desde un JSON
+        function importData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = e => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = event => {
+                        try {
+                            const data = JSON.parse(event.target.result);
+                            weeklyObjective = data.weeklyObjective || 23.5;
+                            localStorage.setItem(LOCALSTORAGEKEY, JSON.stringify(data));
+                            //load session Duration
+                            if (data.currentSession) {
+                                currentSessionStart = new Date(data.currentSession);
+                                localStorage.setItem('currentSession', currentSessionStart.toISOString());
+                                startSessionTimer();
+                            } else {
+                                currentSessionStart = null;
+                                localStorage.removeItem('currentSession');
+                            }
+                            loadData();
+                            updateDisplay();
+                            showNotification(
+                                'Datos Importados', 
+                                'Los datos han sido importados correctamente', 
+                                'success'
+                            );
+                        } catch (error) {
+                            showNotification(
+                                'Error de Importación', 
+                                'El archivo no es válido o está corrupto', 
+                                'error'
+                            );
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            };
+            input.click();
+        }
+
         function displayWeekHistory() {
             const history = getWeekHistory();
             const historyContainer = document.getElementById('weekHistory');
@@ -1127,6 +1236,7 @@
                     </div>
                 `;
             }).join('');
+            
         }
     </script>
 </body>
