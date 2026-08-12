@@ -121,21 +121,6 @@
 <div class="card">
     <h1>🌑 Temporizador de Eclipse 2026</h1>
 
-    <!-- Catálogo de Municipios Predeterminados -->
-    <div class="panel" style="border-color: #0284c7;">
-        <div class="panel-title" style="color: #38bdf8;">🏛️ Catálogo de Municipios (IGN)</div>
-        <div class="row">
-            <div style="flex: 2;">
-                <select id="officialLocations">
-                    <option value="">-- Cargar desde el catálogo --</option>
-                </select>
-            </div>
-            <div style="flex: 1;">
-                <button class="btn btn-sec" onclick="loadCatalogLocation()">📥 Cargar</button>
-            </div>
-        </div>
-    </div>
-
     <!-- Gestión de Ubicaciones Guardadas (Favoritos) -->
     <div class="panel">
         <div class="panel-title" style="color: #a855f7;">⭐ Mis Ubicaciones Guardadas</div>
@@ -159,12 +144,12 @@
 
         <div class="row">
             <div class="input-group" style="flex:1;">
-                <label for="startTime">Inicio Totalidad:</label>
-                <input type="time" id="startTime" step="1" value="20:31:36">
+                <label for="startTime">Inicio Totalidad (Hora local):</label>
+                <input type="time" id="startTime" step="1" value="20:31:03">
             </div>
             <div class="input-group" style="flex:1;">
-                <label for="endTime">Fin Totalidad:</label>
-                <input type="time" id="endTime" step="1" value="20:32:34">
+                <label for="endTime">Fin Totalidad (Hora local):</label>
+                <input type="time" id="endTime" step="1" value="20:32:01">
             </div>
         </div>
 
@@ -184,49 +169,65 @@
     </div>
 
     <div id="instruction" class="alert-instruction"></div>
+
+    <hr style="border: 0; border-top: 1px solid #1e293b; margin: 1.5rem 0;">
+
+    <!-- Catálogo de Municipios Predeterminados (MOVIDO AL FINAL) -->
+    <div class="panel" style="border-color: #0284c7; margin-bottom: 0;">
+        <div class="panel-title" style="color: #38bdf8;">🏛️ Importar Municipio Predeterminado (IGN)</div>
+        <div class="row">
+            <div style="flex: 2;">
+                <select id="officialLocations">
+                    <option value="">-- Cargar desde el catálogo --</option>
+                </select>
+            </div>
+            <div style="flex: 1;">
+                <button class="btn btn-sec" onclick="loadCatalogLocation()">📥 Cargar</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
-    // Catálogo interno de municipios precalculados para el 12 de agosto de 2026
+    // Catálogo interno con horas oficiales exactas (IGN)
     const CATALOGO = {
-        "A Coruña": { start: "20:27:35", end: "20:28:50" },
-        "Ferrol (A Coruña)": { start: "20:27:32", end: "20:28:49" },
-        "Santiago de Compostela": { start: "20:27:52", end: "20:29:00" },
-        "Lugo": { start: "20:28:18", end: "20:29:34" },
-        "Ourense": { start: "20:28:40", end: "20:29:43" },
-        "Oviedo (Asturias)": { start: "20:28:58", end: "20:30:38" },
-        "Gijón (Asturias)": { start: "20:28:50", end: "20:30:34" },
-        "Santander (Cantabria)": { start: "20:29:40", end: "20:30:44" },
-        "Torrelavega (Cantabria)": { start: "20:29:43", end: "20:30:50" },
-        "León": { start: "20:29:32", end: "20:31:14" },
-        "Ponferrada (León)": { start: "20:28:58", end: "20:30:26" },
-        "Palencia": { start: "20:30:12", end: "20:31:54" },
-        "Valladolid": { start: "20:30:35", end: "20:32:11" },
-        "Burgos": { start: "20:30:18", end: "20:32:03" },
-        "Aranda de Duero (Burgos)": { start: "20:31:00", end: "20:32:45" },
-        "Soria": { start: "20:31:22", end: "20:33:05" },
-        "Segovia": { start: "20:31:38", end: "20:32:55" },
-        "Vitoria-Gasteiz": { start: "20:30:10", end: "20:31:30" },
-        "Bilbao": { start: "20:29:50", end: "20:31:05" },
-        "Logroño": { start: "20:30:45", end: "20:32:18" },
-        "Pamplona": { start: "20:30:25", end: "20:31:45" },
-        "Tudela (Navarra)": { start: "20:31:15", end: "20:32:48" },
-        "Guadalajara": { start: "20:31:38", end: "20:32:36" },
-        "Villanueva de la Torre (Guadalajara)": { start: "20:31:36", end: "20:32:34" },
-        "Sigüenza (Guadalajara)": { start: "20:31:40", end: "20:33:15" },
-        "Madrid Capital (Parcial 99.9%)": { start: "20:32:00", end: "20:32:05", warn: true },
-        "Buitrago del Lozoya (Madrid Norte)": { start: "20:31:32", end: "20:32:50" },
-        "Cuenca": { start: "20:32:20", end: "20:33:32" },
-        "Zaragoza": { start: "20:31:38", end: "20:33:04" },
-        "Calatayud (Zaragoza)": { start: "20:31:42", end: "20:33:10" },
-        "Teruel": { start: "20:32:25", end: "20:33:48" },
-        "Alcañiz (Teruel)": { start: "20:32:15", end: "20:33:42" },
-        "Castellón de la Plana": { start: "20:32:52", end: "20:34:18" },
-        "Morella (Castellón)": { start: "20:32:22", end: "20:33:52" },
-        "Valencia": { start: "20:33:12", end: "20:34:10" },
-        "Palma de Mallorca": { start: "20:33:50", end: "20:35:10" },
-        "Ibiza": { start: "20:34:10", end: "20:35:15" },
-        "Mahón (Menorca)": { start: "20:33:35", end: "20:34:58" }
+        "A Coruña": { start: "20:27:37", end: "20:28:51" },
+        "Ferrol (A Coruña)": { start: "20:27:33", end: "20:28:50" },
+        "Santiago de Compostela": { start: "20:27:54", end: "20:29:01" },
+        "Lugo": { start: "20:28:13", end: "20:29:35" },
+        "Ourense": { start: "20:28:42", end: "20:29:45" },
+        "Oviedo (Asturias)": { start: "20:28:13", end: "20:29:53" },
+        "Gijón (Asturias)": { start: "20:28:15", end: "20:29:59" },
+        "Santander (Cantabria)": { start: "20:28:49", end: "20:29:53" },
+        "Torrelavega (Cantabria)": { start: "20:28:50", end: "20:29:57" },
+        "León": { start: "20:28:44", end: "20:30:28" },
+        "Ponferrada (León)": { start: "20:28:22", end: "20:29:49" },
+        "Palencia": { start: "20:29:21", end: "20:31:03" },
+        "Valladolid": { start: "20:29:44", end: "20:31:21" },
+        "Burgos": { start: "20:29:26", end: "20:31:11" },
+        "Aranda de Duero (Burgos)": { start: "20:30:08", end: "20:31:53" },
+        "Soria": { start: "20:30:29", end: "20:32:13" },
+        "Segovia": { start: "20:30:46", end: "20:32:03" },
+        "Vitoria-Gasteiz": { start: "20:29:18", end: "20:30:38" },
+        "Bilbao": { start: "20:28:58", end: "20:30:13" },
+        "Logroño": { start: "20:29:53", end: "20:31:26" },
+        "Pamplona": { start: "20:29:33", end: "20:30:53" },
+        "Tudela (Navarra)": { start: "20:30:23", end: "20:31:56" },
+        "Guadalajara": { start: "20:31:05", end: "20:32:03" },
+        "Villanueva de la Torre (Guadalajara)": { start: "20:31:03", end: "20:32:01" },
+        "Sigüenza (Guadalajara)": { start: "20:30:48", end: "20:32:23" },
+        "Buitrago del Lozoya (Madrid Norte)": { start: "20:30:40", end: "20:31:58" },
+        "Cuenca": { start: "20:31:48", end: "20:33:00" },
+        "Zaragoza": { start: "20:29:04", end: "20:30:27" },
+        "Calatayud (Zaragoza)": { start: "20:30:50", end: "20:32:18" },
+        "Teruel": { start: "20:31:33", end: "20:32:56" },
+        "Alcañiz (Teruel)": { start: "20:31:23", end: "20:32:50" },
+        "Castellón de la Plana": { start: "20:32:00", end: "20:33:26" },
+        "Morella (Castellón)": { start: "20:31:30", end: "20:33:00" },
+        "Valencia": { start: "20:32:20", end: "20:33:18" },
+        "Palma de Mallorca": { start: "20:32:58", end: "20:34:18" },
+        "Ibiza": { start: "20:33:18", end: "20:34:23" },
+        "Mahón (Menorca)": { start: "20:32:43", end: "20:34:06" }
     };
 
     let audioCtx = null;
@@ -255,10 +256,6 @@
         document.getElementById('locationName').value = name;
         document.getElementById('startTime').value = data.start;
         document.getElementById('endTime').value = data.end;
-
-        if (data.warn) {
-            alert("⚠️ Atención: La capital de Madrid queda justo en el límite exterior de la franja (cobertura 99.9%). Para una experiencia de totalidad completa de 1 a 2 minutos, se recomienda desplazarse al norte de la comunidad (ej. Buitrago del Lozoya) o a Guadalajara.");
-        }
     }
 
     function initAudio() {
