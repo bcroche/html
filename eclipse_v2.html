@@ -23,7 +23,7 @@
             padding: 1.5rem;
             border-radius: 1.25rem;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
-            max-width: 540px;
+            max-width: 600px;
             width: 100%;
             text-align: center;
             border: 1px solid #1e293b;
@@ -83,6 +83,8 @@
         .btn-test { background: #d97706; color: white; margin-top: 0.5rem; }
         .btn-sec { background: #334155; color: white; padding: 0.5rem; font-size: 0.85rem; }
         .btn-danger-sm { background: #991b1b; color: white; padding: 0.5rem; font-size: 0.85rem; }
+        .btn-action { background: #0284c7; color: white; border: none; padding: 0.3rem 0.6rem; border-radius: 0.4rem; cursor: pointer; font-size: 0.8rem; }
+        .btn-action:hover { background: #0369a1; }
 
         .status-box {
             margin-top: 1rem;
@@ -114,14 +116,61 @@
 
         .safe { background-color: rgba(22, 101, 52, 0.4); color: #4ade80; border: 2px solid #22c55e; }
         .danger { background-color: rgba(153, 27, 27, 0.4); color: #fca5a5; border: 2px solid #ef4444; }
+
+        .notice-box {
+            background-color: #1e293b;
+            border-left: 4px solid #38bdf8;
+            padding: 0.75rem;
+            border-radius: 0.4rem;
+            font-size: 0.82rem;
+            color: #cbd5e1;
+            margin-bottom: 0.8rem;
+            line-height: 1.4;
+        }
+
+        .notice-box a {
+            color: #38bdf8;
+            font-weight: bold;
+            text-decoration: underline;
+        }
+
+        .table-container {
+            max-height: 250px;
+            overflow-y: auto;
+            border: 1px solid #334155;
+            border-radius: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 0.5rem 0.6rem;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        th {
+            background-color: #1e293b;
+            color: #38bdf8;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        tr:hover { background-color: #1e293b; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h1>🌑 Temporizador de Eclipse 2026</h1>
+    <h1>🌑 Temporizador Eclipse 2026</h1>
 
-    <!-- Gestión de Ubicaciones Guardadas (Favoritos) -->
+    <!-- Gestión de Favoritos -->
     <div class="panel">
         <div class="panel-title" style="color: #a855f7;">⭐ Mis Ubicaciones Guardadas</div>
         <div class="input-group">
@@ -135,21 +184,21 @@
         </div>
     </div>
 
-    <!-- Configuración del punto actual -->
+    <!-- Panel de Configuración -->
     <div class="panel">
         <div class="input-group">
             <label for="locationName">Nombre del sitio:</label>
-            <input type="text" id="locationName" value="Villanueva de la Torre (Guadalajara)">
+            <input type="text" id="locationName" value="Palma (Illes Balears)">
         </div>
 
         <div class="row">
             <div class="input-group" style="flex:1;">
-                <label for="startTime">Inicio Totalidad (Hora local):</label>
-                <input type="time" id="startTime" step="1" value="20:31:03">
+                <label for="startTime">Inicio Totalidad:</label>
+                <input type="time" id="startTime" step="1" value="20:31:06">
             </div>
             <div class="input-group" style="flex:1;">
-                <label for="endTime">Fin Totalidad (Hora local):</label>
-                <input type="time" id="endTime" step="1" value="20:32:01">
+                <label for="endTime">Fin Totalidad:</label>
+                <input type="time" id="endTime" step="1" value="20:32:42">
             </div>
         </div>
 
@@ -172,90 +221,104 @@
 
     <hr style="border: 0; border-top: 1px solid #1e293b; margin: 1.5rem 0;">
 
-    <!-- Catálogo de Municipios Predeterminados (MOVIDO AL FINAL) -->
+    <!-- Tabla Catálogo Oficial IGN (Solo Totalidad) -->
     <div class="panel" style="border-color: #0284c7; margin-bottom: 0;">
-        <div class="panel-title" style="color: #38bdf8;">🏛️ Importar Municipio Predeterminado (IGN)</div>
-        <div class="row">
-            <div style="flex: 2;">
-                <select id="officialLocations">
-                    <option value="">-- Cargar desde el catálogo --</option>
-                </select>
-            </div>
-            <div style="flex: 1;">
-                <button class="btn btn-sec" onclick="loadCatalogLocation()">📥 Cargar</button>
-            </div>
+        <div class="panel-title" style="color: #38bdf8;">🏛️ Lugares con Totalidad Confirmada</div>
+        
+        <div class="notice-box">
+            📌 Las horas varían según tus coordenadas exactas. Consulta la ubicación y hora precisa en el visor interactivo oficial del IGN: <br>
+            👉 <a href="https://visualizadores.ign.es/eclipses/2026" target="_blank" rel="noopener">visualizadores.ign.es/eclipses/2026</a>
+        </div>
+
+        <div class="input-group">
+            <input type="text" id="searchBox" placeholder="🔍 Buscar ciudad..." oninput="filterCatalogTable()">
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ubicación</th>
+                        <th>Inicio</th>
+                        <th>Fin</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="catalogTableBody">
+                    <!-- Rellenado con JavaScript -->
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
 
 <script>
-    // Catálogo interno con horas oficiales exactas (IGN)
-    const CATALOGO = {
-        "A Coruña": { start: "20:27:37", end: "20:28:51" },
-        "Ferrol (A Coruña)": { start: "20:27:33", end: "20:28:50" },
-        "Santiago de Compostela": { start: "20:27:54", end: "20:29:01" },
-        "Lugo": { start: "20:28:13", end: "20:29:35" },
-        "Ourense": { start: "20:28:42", end: "20:29:45" },
-        "Oviedo (Asturias)": { start: "20:28:13", end: "20:29:53" },
-        "Gijón (Asturias)": { start: "20:28:15", end: "20:29:59" },
-        "Santander (Cantabria)": { start: "20:28:49", end: "20:29:53" },
-        "Torrelavega (Cantabria)": { start: "20:28:50", end: "20:29:57" },
-        "León": { start: "20:28:44", end: "20:30:28" },
-        "Ponferrada (León)": { start: "20:28:22", end: "20:29:49" },
-        "Palencia": { start: "20:29:21", end: "20:31:03" },
-        "Valladolid": { start: "20:29:44", end: "20:31:21" },
-        "Burgos": { start: "20:29:26", end: "20:31:11" },
-        "Aranda de Duero (Burgos)": { start: "20:30:08", end: "20:31:53" },
-        "Soria": { start: "20:30:29", end: "20:32:13" },
-        "Segovia": { start: "20:30:46", end: "20:32:03" },
-        "Vitoria-Gasteiz": { start: "20:29:18", end: "20:30:38" },
-        "Bilbao": { start: "20:28:58", end: "20:30:13" },
-        "Logroño": { start: "20:29:53", end: "20:31:26" },
-        "Pamplona": { start: "20:29:33", end: "20:30:53" },
-        "Tudela (Navarra)": { start: "20:30:23", end: "20:31:56" },
-        "Guadalajara": { start: "20:31:05", end: "20:32:03" },
-        "Villanueva de la Torre (Guadalajara)": { start: "20:31:03", end: "20:32:01" },
-        "Sigüenza (Guadalajara)": { start: "20:30:48", end: "20:32:23" },
-        "Buitrago del Lozoya (Madrid Norte)": { start: "20:30:40", end: "20:31:58" },
-        "Cuenca": { start: "20:31:48", end: "20:33:00" },
-        "Zaragoza": { start: "20:29:04", end: "20:30:27" },
-        "Calatayud (Zaragoza)": { start: "20:30:50", end: "20:32:18" },
-        "Teruel": { start: "20:31:33", end: "20:32:56" },
-        "Alcañiz (Teruel)": { start: "20:31:23", end: "20:32:50" },
-        "Castellón de la Plana": { start: "20:32:00", end: "20:33:26" },
-        "Morella (Castellón)": { start: "20:31:30", end: "20:33:00" },
-        "Valencia": { start: "20:32:20", end: "20:33:18" },
-        "Palma de Mallorca": { start: "20:32:58", end: "20:34:18" },
-        "Ibiza": { start: "20:33:18", end: "20:34:23" },
-        "Mahón (Menorca)": { start: "20:32:43", end: "20:34:06" }
-    };
+    // Catálogo únicamente con localizaciones de eclipse TOTAL (Ordenado Alfabéticamente)
+    const CATALOGO = [
+        { name: "A Coruña", start: "20:27:37", end: "20:28:51" },
+        { name: "Ávila", start: "20:30:52", end: "20:31:12" },
+        { name: "Bilbao", start: "20:27:17", end: "20:27:49" },
+        { name: "Burgos", start: "20:28:19", end: "20:30:04" },
+        { name: "Castellón de la Plana", start: "20:31:14", end: "20:32:48" },
+        { name: "Cuenca", start: "20:31:48", end: "20:33:00" },
+        { name: "Guadalajara", start: "20:31:05", end: "20:32:03" },
+        { name: "Huesca", start: "20:28:44", end: "20:30:10" },
+        { name: "León", start: "20:28:15", end: "20:29:59" },
+        { name: "Logroño", start: "20:28:03", end: "20:29:24" },
+        { name: "Lugo", start: "20:28:03", end: "20:29:25" },
+        { name: "Madrid (Norte)", start: "20:32:04", end: "20:32:24" },
+        { name: "Ourense", start: "20:28:42", end: "20:29:45" },
+        { name: "Oviedo", start: "20:27:00", end: "20:28:48" },
+        { name: "Palencia", start: "20:29:21", end: "20:31:03" },
+        { name: "Palma (Illes Balears)", start: "20:31:06", end: "20:32:42" },
+        { name: "Pamplona", start: "20:27:44", end: "20:28:57" },
+        { name: "San Sebastián", start: "20:27:08", end: "20:27:54" },
+        { name: "Santander", start: "20:26:51", end: "20:27:55" },
+        { name: "Segovia", start: "20:30:46", end: "20:32:03" },
+        { name: "Soria", start: "20:29:18", end: "20:30:57" },
+        { name: "Teruel", start: "20:31:33", end: "20:32:56" },
+        { name: "Valencia", start: "20:32:20", end: "20:33:18" },
+        { name: "Valladolid", start: "20:29:44", end: "20:31:21" },
+        { name: "Vitoria-Gasteiz", start: "20:27:37", end: "20:28:42" },
+        { name: "Zamora", start: "20:30:50", end: "20:31:04" },
+        { name: "Zaragoza", start: "20:29:04", end: "20:30:27" }
+    ];
 
     let audioCtx = null;
     let timerInterval = null;
 
     document.addEventListener('DOMContentLoaded', () => {
-        populateCatalogDropdown();
+        renderCatalogTable(CATALOGO);
         updateSavedDropdown();
     });
 
-    function populateCatalogDropdown() {
-        const dropdown = document.getElementById('officialLocations');
-        for (let key in CATALOGO) {
-            const opt = document.createElement('option');
-            opt.value = key;
-            opt.textContent = key;
-            dropdown.appendChild(opt);
-        }
+    function renderCatalogTable(data) {
+        const tbody = document.getElementById('catalogTableBody');
+        tbody.innerHTML = '';
+
+        data.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${item.name}</strong></td>
+                <td>${item.start}</td>
+                <td>${item.end}</td>
+                <td><button class="btn-action" onclick="selectCity('${item.name}', '${item.start}', '${item.end}')">📥 Cargar</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
     }
 
-    function loadCatalogLocation() {
-        const name = document.getElementById('officialLocations').value;
-        if (!name) return;
+    function filterCatalogTable() {
+        const query = document.getElementById('searchBox').value.toLowerCase();
+        const filtered = CATALOGO.filter(item => item.name.toLowerCase().includes(query));
+        renderCatalogTable(filtered);
+    }
 
-        const data = CATALOGO[name];
+    function selectCity(name, start, end) {
         document.getElementById('locationName').value = name;
-        document.getElementById('startTime').value = data.start;
-        document.getElementById('endTime').value = data.end;
+        document.getElementById('startTime').value = start;
+        document.getElementById('endTime').value = end;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function initAudio() {
